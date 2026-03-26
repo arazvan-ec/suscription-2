@@ -1,0 +1,41 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\Messenger;
+
+use App\Application\Command\SyncMailchimpCommand;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+
+#[AsMessageHandler(fromTransport: 'async')]
+final readonly class SyncMailchimpHandler
+{
+    public function __construct(
+        private MailchimpClient $mailchimpClient,
+        private LoggerInterface $logger,
+    ) {}
+
+    public function __invoke(SyncMailchimpCommand $command): void
+    {
+        $this->logger->info('Syncing with Mailchimp', [
+            'email' => $command->email,
+            'action' => $command->action,
+        ]);
+
+        match ($command->action) {
+            SyncMailchimpCommand::ACTION_SUBSCRIBE => $this->mailchimpClient->addToAudience(
+                $command->email,
+                $command->tags,
+            ),
+            SyncMailchimpCommand::ACTION_UNSUBSCRIBE => $this->mailchimpClient->removeFromAudience(
+                $command->email,
+            ),
+        };
+
+        $this->logger->info('Mailchimp sync completed', [
+            'email' => $command->email,
+            'action' => $command->action,
+        ]);
+    }
+}

@@ -1,0 +1,32 @@
+framework:
+    messenger:
+        failure_transport: failed
+
+        transports:
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: enbandeja
+                        type: topic
+                    queues:
+                        enbandeja_subscriptions:
+                            binding_keys:
+                                - 'subscription.#'
+                        enbandeja_editorial:
+                            binding_keys:
+                                - 'editorial.published'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 30000
+
+            failed:
+                dsn: 'doctrine://default?queue_name=failed'
+
+        routing:
+            'App\Domain\Event\SubscriptionCreatedEvent': async
+            'App\Domain\Event\SubscriptionDeletedEvent': async
+            'App\Application\Command\SyncMailchimpCommand': async
+            'App\Application\Command\ProcessCampaignCommand': async

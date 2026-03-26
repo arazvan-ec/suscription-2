@@ -1,0 +1,22 @@
+parameters:
+    jwt_secret: '%env(JWT_SECRET)%'
+    mailchimp_api_key: '%env(MAILCHIMP_API_KEY)%'
+    mailchimp_list_id: '%env(MAILCHIMP_LIST_ID)%'
+    mailchimp_data_center: '%env(MAILCHIMP_DATA_CENTER)%'
+
+services:
+    App\Infrastructure\Security\JwtTokenDecoder:
+        arguments:
+            $jwtSecret: '%jwt_secret%'
+
+    App\Infrastructure\Messenger\MailchimpClient:
+        arguments:
+            $mailchimpApiKey: '%mailchimp_api_key%'
+            $mailchimpListId: '%mailchimp_list_id%'
+            $mailchimpDataCenter: '%mailchimp_data_center%'
+
+    App\Domain\Repository\SubscriptionRepositoryInterface:
+        class: App\Infrastructure\Persistence\DoctrineSubscriptionRepository
+
+    App\Domain\Repository\CampaignRepositoryInterface:
+        class: App\Infrastructure\Persistence\DoctrineCampaignRepository
