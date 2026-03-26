@@ -50,40 +50,53 @@ El notifier-service **ya existe** y usa `symfony-notifier` para envío. Sin emba
 
 ## 3. Dimensionamiento
 
-El usuario no tiene números exactos. Aquí van referencias para dimensionar
-basadas en medios digitales de tamaño similar:
+Datos confirmados por el equipo:
 
-### Escenarios de referencia
+- **4000 editoriales/día** (~170/hora, picos de ~10/minuto en breaking news)
+- Flags de entidad ya existen en journalist-svc et al.
+- JWT se genera al login, se guarda como cookie `accessToken`
 
-| Métrica | Conservador | Medio | Agresivo |
-|---------|-------------|-------|----------|
-| Usuarios registrados | 100K | 500K | 2M |
-| % que usa "seguir" | 2-5% | 5-10% | 10-20% |
-| Suscripciones activas | 2K-5K | 25K-50K | 200K-400K |
-| Suscripciones por usuario | 1-3 | 3-5 | 5-10 |
-| Editoriales/día | 50-100 | 100-200 | 200-500 |
-| Notificaciones/día | 5K-15K | 50K-200K | 500K-2M |
+### Escenarios de referencia (ajustados a volumen real)
 
-### Implicaciones para el diseño
+| Métrica | Lanzamiento | 6 meses | 12 meses |
+|---------|-------------|---------|----------|
+| Usuarios registrados | 500K+ | 500K+ | 500K+ |
+| % que usa "seguir" | 2-3% | 5-8% | 10-15% |
+| Suscripciones activas | 10K-15K | 25K-40K | 50K-75K |
+| Suscripciones por usuario | 2-3 | 3-5 | 5-8 |
+| Editoriales/día | **4,000** | **4,000** | **4,000+** |
+| Campañas/día (con followers) | 200-800 | 500-1,500 | 1,000-3,000 |
+| Notificaciones/día | 20K-60K | 100K-300K | 500K-1M |
+
+### Implicaciones para el diseño (volumen alto de editoriales)
 
 - **GET /subscriptions (status check)**: Alto tráfico, se ejecuta en cada
-  page view de un usuario logueado. Debe ser < 50ms. → Índice compuesto
+  page view de un usuario logueado. Debe ser < 50ms p95. → Índice compuesto
   en (user_id, entity_type, entity_id) es crítico.
 
 - **POST/DELETE /subscriptions**: Tráfico bajo-medio. Puede tolerar ~200ms
   porque la sincronización con Mailchimp es async.
 
-- **editorial.published consumer**: Ráfagas cuando se publican varios
-  editoriales simultáneos (breaking news). Debe procesar sin backpressure.
-  → Worker con autoescalado.
+- **editorial.published consumer**: **CRÍTICO** — 4000 eventos/día = ~3/min
+  de media, pero con picos de ~10/min en ráfagas de noticias. La mayoría de
+  editoriales NO tendrán seguidores → el consumer debe hacer el check de
+  followers rápido y descartar pronto (fast-path). Requiere:
+  - `hasActiveSubscriptionsForAny()` optimizado (single query, limit 1)
+  - Prefetch bajo en RabbitMQ (prefetch_count: 5-10)
+  - Múltiples workers si hay backpressure
 
-- **Campaign processing**: Puede ser diferido 5-10 minutos post-publicación.
-  Batch-friendly. → Cron cada minuto + procesamiento async.
+- **Campaign processing**: Solo se crean campañas cuando hay followers
+  (~5-20% de editoriales). Puede ser diferido 5-10 min. Cron + async dispatch.
+
+- **Mailchimp sync**: Con 4000 editoriales generando suscripciones y
+  cancelaciones, el batching de audience sync es imprescindible.
+  Rate limit Mailchimp: 10 req/s → batch endpoint recomendado.
 
 ### Recomendación de dimensionamiento inicial
 
-Diseñar para el escenario **Medio** (50K suscripciones, 200 editoriales/día)
-con capacidad de escalar a **Agresivo** sin cambios arquitecturales.
+Diseñar para **4000 editoriales/día** y **50K-75K suscripciones activas** a
+12 meses. El consumer de `editorial.published` es el componente más exigido
+y debe ser optimizado para descartar rápido (fast discard path).
 
 ---
 
@@ -193,10 +206,8 @@ Si se cambia Mailchimp por otro proveedor:
 
 1. ¿El notifier-service aceptará un nuevo tipo de mensaje desde enBandeja o hay
    que definir un contrato nuevo?
-2. ¿Los flags de entidad (habilitado para "seguir") ya existen en journalist-svc
-   et al., o hay que añadirlos?
-3. ¿Hay un servicio de identidad/auth central que emite los JWT, o cada servicio
-   los valida independientemente?
+2. ~~¿Los flags de entidad ya existen?~~ → **RESUELTO**: Sí, ya existen en journalist-svc et al.
+3. ~~¿Hay servicio de auth central?~~ → **RESUELTO**: Sí, JWT se genera al login y se guarda como cookie `accessToken`
 4. ¿Mailchimp ya tiene una cuenta/audiencia configurada para El Confidencial?
 
 ---
