@@ -1,0 +1,31 @@
+# OpenSpec configuration for enBandeja service
+version: "1.0"
+
+project:
+  name: enbandeja-service
+  description: Subscription & notification microservice for editorial entities
+  language: php
+  framework: symfony
+
+specs_dir: openspec/specs
+changes_dir: openspec/changes
+
+conventions:
+  architecture: three-layer-ddd
+  layers:
+    - domain: src/Domain/
+    - application: src/Application/
+    - infrastructure: src/Infrastructure/
+  naming:
+    commands: "{Verb}{Noun}Command"
+    queries: "Get{Noun}Query"
+    handlers: "{Message}Handler"
+    controllers: "{Resource}Controller"
+    entities: "src/Domain/Entity/{Name}.php"
+    repositories: "src/Domain/Repository/{Name}RepositoryInterface.php"
+    repository_impl: "src/Infrastructure/Persistence/{Name}Repository.php"
+
+delta_markers:
+  - ADDED
+  - MODIFIED
+  - REMOVED
