@@ -1,0 +1,67 @@
+framework:
+    messenger:
+        failure_transport: failed
+
+        transports:
+            # Internal async — commands and domain events
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: enbandeja
+                        type: topic
+                    queues:
+                        enbandeja_subscriptions:
+                            binding_keys:
+                                - 'subscription.#'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 30000
+
+            # External — events from Jarvis CMS (ADR-5)
+            jarvis_events:
+                dsn: '%env(JARVIS_TRANSPORT_DSN)%'
+                serializer: App\Infrastructure\Messenger\Serializer\JarvisEventSerializer
+                options:
+                    exchange:
+                        name: jarvis
+                        type: topic
+                    queues:
+                        enbandeja_editorial:
+                            binding_keys:
+                                - 'editorial.published'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 30000
+
+            # Mailchimp sync — dedicated, concurrency-limited (ADR-6)
+            mailchimp_sync:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: enbandeja
+                        type: topic
+                    queues:
+                        enbandeja_mailchimp:
+                            binding_keys:
+                                - 'mailchimp.#'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 2000
+                    multiplier: 2
+                    max_delay: 60000
+
+            # Failed messages — Doctrine for inspection
+            failed:
+                dsn: 'doctrine://default?queue_name=failed'
+
+        routing:
+            'App\Domain\Event\SubscriptionCreatedEvent': async
+            'App\Domain\Event\SubscriptionDeletedEvent': async
+            'App\Application\Command\SyncMailchimpCommand': mailchimp_sync
+            'App\Application\Command\ProcessCampaignCommand': async
+            'App\Application\Command\SendNotificationCommand': async

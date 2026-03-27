@@ -1,0 +1,19 @@
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Domain/Entity/'
+            - '../src/Domain/Event/'
+            - '../src/Domain/ValueObject/'
+            - '../src/Kernel.php'
+
+    App\Infrastructure\Controller\:
+        resource: '../src/Infrastructure/Controller/'
+        tags: ['controller.service_arguments']

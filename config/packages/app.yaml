@@ -1,0 +1,37 @@
+parameters:
+    jwt_secret: '%env(JWT_SECRET)%'
+    mailchimp_api_key: '%env(MAILCHIMP_API_KEY)%'
+    mailchimp_list_id: '%env(MAILCHIMP_LIST_ID)%'
+    mailchimp_data_center: '%env(MAILCHIMP_DATA_CENTER)%'
+    journalist_service_url: '%env(JOURNALIST_SERVICE_URL)%'
+    tag_service_url: '%env(TAG_SERVICE_URL)%'
+    section_service_url: '%env(SECTION_SERVICE_URL)%'
+
+services:
+    App\Infrastructure\Security\JwtTokenDecoder:
+        arguments:
+            $jwtSecret: '%jwt_secret%'
+
+    App\Infrastructure\Messenger\MailchimpClient:
+        arguments:
+            $mailchimpApiKey: '%mailchimp_api_key%'
+            $mailchimpListId: '%mailchimp_list_id%'
+            $mailchimpDataCenter: '%mailchimp_data_center%'
+
+    App\Application\Port\MailchimpClientInterface:
+        alias: App\Infrastructure\Messenger\MailchimpClient
+
+    App\Infrastructure\Http\EntityFlagChecker:
+        arguments:
+            $journalistServiceUrl: '%journalist_service_url%'
+            $tagServiceUrl: '%tag_service_url%'
+            $sectionServiceUrl: '%section_service_url%'
+
+    App\Application\Port\EntityFlagCheckerInterface:
+        alias: App\Infrastructure\Http\EntityFlagChecker
+
+    App\Domain\Repository\SubscriptionRepositoryInterface:
+        alias: App\Infrastructure\Persistence\DoctrineSubscriptionRepository
+
+    App\Domain\Repository\CampaignRepositoryInterface:
+        alias: App\Infrastructure\Persistence\DoctrineCampaignRepository
