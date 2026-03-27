@@ -44,7 +44,7 @@ final readonly class MailchimpClient implements MailchimpClientInterface
             ]);
         }
 
-        $this->logger->info('Added to Mailchimp audience', ['email' => $email, 'tags' => $tags]);
+        $this->logger->info('Added to Mailchimp audience', ['email_hash' => md5(strtolower($email)), 'tags' => $tags]);
     }
 
     public function removeTagsFromAudience(string $email, array $tags): void
@@ -62,7 +62,7 @@ final readonly class MailchimpClient implements MailchimpClientInterface
             'timeout' => 5,
         ]);
 
-        $this->logger->info('Removed tags from Mailchimp member', ['email' => $email, 'tags' => $tags]);
+        $this->logger->info('Removed tags from Mailchimp member', ['email_hash' => md5(strtolower($email)), 'tags' => $tags]);
     }
 
     public function removeFromAudience(string $email): void
@@ -77,7 +77,7 @@ final readonly class MailchimpClient implements MailchimpClientInterface
             'timeout' => 5,
         ]);
 
-        $this->logger->info('Removed from Mailchimp audience', ['email' => $email]);
+        $this->logger->info('Removed from Mailchimp audience', ['email_hash' => md5(strtolower($email))]);
     }
 
     private function buildUrl(string $path): string

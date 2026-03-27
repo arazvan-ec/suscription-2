@@ -29,6 +29,13 @@ final readonly class EditorialPublishedHandler
             'editorial_id' => $event->editorialId,
         ]);
 
+        if ($this->campaignRepository->existsByEditorialId($event->editorialId)) {
+            $this->logger->info('Campaign already exists for editorial, skipping', [
+                'editorial_id' => $event->editorialId,
+            ]);
+            return;
+        }
+
         $entities = $this->flagChecker->getEnabledEntities($event);
 
         if (empty($entities)) {

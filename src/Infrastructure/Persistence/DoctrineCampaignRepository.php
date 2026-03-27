@@ -29,6 +29,17 @@ class DoctrineCampaignRepository extends ServiceEntityRepository implements Camp
         return parent::find($id, $lockMode, $lockVersion);
     }
 
+    public function existsByEditorialId(string $editorialId): bool
+    {
+        return $this->createQueryBuilder('c')
+            ->select('1')
+            ->where('c.editorialId = :editorialId')
+            ->setParameter('editorialId', $editorialId)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult() !== null;
+    }
+
     public function findReadyToProcess(\DateTimeImmutable $now = new \DateTimeImmutable()): array
     {
         $conn = $this->getEntityManager()->getConnection();

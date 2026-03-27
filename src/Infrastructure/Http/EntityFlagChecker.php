@@ -48,7 +48,8 @@ final readonly class EntityFlagChecker implements EntityFlagCheckerInterface
     private function isFollowEnabled(EntityType $type, string $id, string $serviceUrl): bool
     {
         try {
-            $response = $this->httpClient->request('GET', "{$serviceUrl}/{$id}", [
+            $safeId = urlencode($id);
+            $response = $this->httpClient->request('GET', "{$serviceUrl}/{$safeId}", [
                 'timeout' => 2,
             ]);
 
