@@ -29,7 +29,7 @@ Three-layer DDD structure:
 - Entity types: `journalist`, `tag`, `section`
 
 ### Campaign
-- Fields: id (UUID v7), type, status (pending/sent/failed), scheduled_at, audience_criteria (JSON), editorial_id, created_at
+- Fields: id (UUID v7), type, status (pending/processing/sent/failed), scheduled_at, audience_criteria (JSON), editorial_id, created_at
 - Created when editorial.published event arrives and entities have followers
 - Worker processes campaigns when scheduled_at <= NOW()
 
@@ -76,7 +76,7 @@ Three-layer DDD structure:
 
 ## Non-Functional Requirements
 
-- Subscription check (GET) must respond < 100ms (user-facing, synchronous)
-- Subscribe/unsubscribe must respond < 200ms (Mailchimp sync is async)
-- Campaign processing is async, target < 5 min from editorial publish to notification dispatch
-- Must handle 10K+ subscribers per entity without performance degradation
+- Subscription check (GET) must respond < 50ms p95 (user-facing, synchronous)
+- Subscribe/unsubscribe must respond < 200ms p95 (Mailchimp sync is async)
+- Campaign processing is async, target < 10 min from editorial publish to notification dispatch
+- Must handle 4000 editoriales/day, 50K-75K active subscriptions at 12 months

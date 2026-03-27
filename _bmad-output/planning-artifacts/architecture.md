@@ -288,7 +288,7 @@ transports:
         retry_strategy:
             max_retries: 3
             delay: 1000
-            multiplier: 3
+            multiplier: 2
             max_delay: 30000
 
     # Mailchimp sync — dedicated, concurrency-limited
@@ -429,6 +429,25 @@ Request → JwtTokenExtractor → JwtTokenDecoder → AuthenticatedUser
 **Rationale**: Desacoplamiento. notifier-service no necesita saber de enBandeja. El mensaje es autocontenido. Si se cambia el sistema de envío, enBandeja no cambia.
 **Consequences**: notifier-service debe aceptar este formato de mensaje (coordinar contrato).
 
+**Message contract (SendNotificationCommand)**:
+
+```json
+{
+  "recipients": [
+    {"email": "user@example.com", "user_id": "user-123"},
+    {"email": "other@example.com", "user_id": "user-456"}
+  ],
+  "editorial_id": "editorial-789",
+  "editorial_title": "",
+  "channel": "email"
+}
+```
+
+- `recipients`: array de objetos con `email` (string) y `user_id` (string). Deduplicados por email.
+- `editorial_id`: ID del editorial publicado. El notifier-service enriquece con título, URL, imagen.
+- `editorial_title`: vacío — el notifier-service lo resuelve desde Jarvis/editorial-service.
+- `channel`: siempre `email` en MVP. Extensible a `push`, `sms` en futuro.
+
 ---
 
 ## 8. Infrastructure
@@ -459,6 +478,7 @@ Request → JwtTokenExtractor → JwtTokenDecoder → AuthenticatedUser
 | MAILCHIMP_LIST_ID | Audience ID | abc123 |
 | MAILCHIMP_DATA_CENTER | API region | us1 |
 | CORS_ALLOW_ORIGIN | Allowed origins | ^https://.*elconfidencial\.com$ |
+| LOCK_DSN | Lock store for Scheduler | postgresql+advisory://localhost:5432/enbandeja |
 
 ### 8.3 Deployment
 
