@@ -24,6 +24,9 @@
         "symfony/runtime": "8.0.*",
         "symfony/serializer": "8.0.*",
         "symfony/uid": "8.0.*",
+        "symfony/http-client": "8.0.*",
+        "symfony/lock": "8.0.*",
+        "symfony/scheduler": "8.0.*",
         "symfony/validator": "8.0.*",
         "symfony/yaml": "8.0.*",
         "web-token/jwt-framework": "^4.0"
