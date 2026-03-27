@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace App\Infrastructure\Messenger;
 
 use App\Application\Command\SyncMailchimpCommand;
+use App\Application\Port\MailchimpClientInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-#[AsMessageHandler(fromTransport: 'async')]
+#[AsMessageHandler(fromTransport: 'mailchimp_sync')]
 final readonly class SyncMailchimpHandler
 {
     public function __construct(
-        private MailchimpClient $mailchimpClient,
+        private MailchimpClientInterface $mailchimpClient,
         private LoggerInterface $logger,
     ) {}
 

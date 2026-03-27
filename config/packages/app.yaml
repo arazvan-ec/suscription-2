@@ -3,6 +3,9 @@ parameters:
     mailchimp_api_key: '%env(MAILCHIMP_API_KEY)%'
     mailchimp_list_id: '%env(MAILCHIMP_LIST_ID)%'
     mailchimp_data_center: '%env(MAILCHIMP_DATA_CENTER)%'
+    journalist_service_url: '%env(JOURNALIST_SERVICE_URL)%'
+    tag_service_url: '%env(TAG_SERVICE_URL)%'
+    section_service_url: '%env(SECTION_SERVICE_URL)%'
 
 services:
     App\Infrastructure\Security\JwtTokenDecoder:
@@ -15,8 +18,20 @@ services:
             $mailchimpListId: '%mailchimp_list_id%'
             $mailchimpDataCenter: '%mailchimp_data_center%'
 
+    App\Application\Port\MailchimpClientInterface:
+        alias: App\Infrastructure\Messenger\MailchimpClient
+
+    App\Infrastructure\Http\EntityFlagChecker:
+        arguments:
+            $journalistServiceUrl: '%journalist_service_url%'
+            $tagServiceUrl: '%tag_service_url%'
+            $sectionServiceUrl: '%section_service_url%'
+
+    App\Application\Port\EntityFlagCheckerInterface:
+        alias: App\Infrastructure\Http\EntityFlagChecker
+
     App\Domain\Repository\SubscriptionRepositoryInterface:
-        class: App\Infrastructure\Persistence\DoctrineSubscriptionRepository
+        alias: App\Infrastructure\Persistence\DoctrineSubscriptionRepository
 
     App\Domain\Repository\CampaignRepositoryInterface:
-        class: App\Infrastructure\Persistence\DoctrineCampaignRepository
+        alias: App\Infrastructure\Persistence\DoctrineCampaignRepository

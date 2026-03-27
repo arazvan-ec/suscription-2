@@ -23,9 +23,9 @@ class DoctrineCampaignRepository extends ServiceEntityRepository implements Camp
         $this->getEntityManager()->flush();
     }
 
-    public function find(mixed $id, mixed $lockMode = null, mixed $lockVersion = null): ?Campaign
+    public function find(string $id): ?Campaign
     {
-        return parent::find($id, $lockMode, $lockVersion);
+        return parent::find($id);
     }
 
     public function findReadyToProcess(\DateTimeImmutable $now = new \DateTimeImmutable()): array

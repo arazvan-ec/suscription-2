@@ -39,7 +39,7 @@ final class Version20260326000000 extends AbstractMigration
             type VARCHAR(50) NOT NULL,
             status VARCHAR(20) NOT NULL DEFAULT \'pending\',
             scheduled_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
-            audience_criteria JSON NOT NULL,
+            audience_criteria JSONB NOT NULL,
             editorial_id VARCHAR(255) NOT NULL,
             created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
             PRIMARY KEY(id)
