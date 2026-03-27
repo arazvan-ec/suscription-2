@@ -14,6 +14,7 @@ final readonly class SubscribeRequest
         public string $entityType,
 
         #[Assert\NotBlank]
+        #[Assert\Length(max: 255)]
         public string $entityId,
     ) {}
 }

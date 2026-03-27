@@ -29,8 +29,15 @@ final readonly class SyncMailchimpHandler
                 $command->email,
                 $command->tags,
             ),
+            SyncMailchimpCommand::ACTION_REMOVE_TAGS => $this->mailchimpClient->removeTagsFromAudience(
+                $command->email,
+                $command->tags,
+            ),
             SyncMailchimpCommand::ACTION_UNSUBSCRIBE => $this->mailchimpClient->removeFromAudience(
                 $command->email,
+            ),
+            default => throw new \Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException(
+                "Unknown Mailchimp sync action: {$command->action}",
             ),
         };
 

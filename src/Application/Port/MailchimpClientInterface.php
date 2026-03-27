@@ -8,5 +8,7 @@ interface MailchimpClientInterface
 {
     public function addToAudience(string $email, array $tags = []): void;
 
+    public function removeTagsFromAudience(string $email, array $tags): void;
+
     public function removeFromAudience(string $email): void;
 }

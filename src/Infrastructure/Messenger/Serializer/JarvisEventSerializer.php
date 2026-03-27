@@ -36,7 +36,7 @@ final class JarvisEventSerializer implements SerializerInterface
             tagIds: $data['tag_ids'] ?? [],
             sectionId: $data['section_id'] ?? null,
             occurredAt: isset($data['occurred_at'])
-                ? new \DateTimeImmutable($data['occurred_at'])
+                ? $this->parseDate($data['occurred_at'])
                 : new \DateTimeImmutable(),
         );
 
@@ -48,10 +48,11 @@ final class JarvisEventSerializer implements SerializerInterface
         $message = $envelope->getMessage();
 
         if (!$message instanceof EditorialPublishedEvent) {
-            return [
-                'body' => json_encode($message, \JSON_THROW_ON_ERROR),
-                'headers' => ['Content-Type' => 'application/json'],
-            ];
+            throw new \InvalidArgumentException(sprintf(
+                'JarvisEventSerializer can only encode %s, got %s',
+                EditorialPublishedEvent::class,
+                get_class($message),
+            ));
         }
 
         return [
@@ -65,5 +66,18 @@ final class JarvisEventSerializer implements SerializerInterface
             ], \JSON_THROW_ON_ERROR),
             'headers' => ['Content-Type' => 'application/json'],
         ];
+    }
+
+    private function parseDate(string $value): \DateTimeImmutable
+    {
+        try {
+            return new \DateTimeImmutable($value);
+        } catch (\Exception $e) {
+            throw new UnrecoverableMessageHandlingException(
+                sprintf('Invalid date format for occurred_at: %s', $value),
+                0,
+                $e,
+            );
+        }
     }
 }

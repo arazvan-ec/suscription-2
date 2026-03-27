@@ -8,6 +8,7 @@ use App\Domain\Entity\Campaign;
 use App\Domain\Repository\CampaignRepositoryInterface;
 use App\Domain\ValueObject\CampaignStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\LockMode;
 use Doctrine\Persistence\ManagerRegistry;
 
 class DoctrineCampaignRepository extends ServiceEntityRepository implements CampaignRepositoryInterface
@@ -23,19 +24,31 @@ class DoctrineCampaignRepository extends ServiceEntityRepository implements Camp
         $this->getEntityManager()->flush();
     }
 
-    public function find(string $id): ?Campaign
+    public function find(mixed $id, mixed $lockMode = null, mixed $lockVersion = null): ?Campaign
     {
-        return parent::find($id);
+        return parent::find($id, $lockMode, $lockVersion);
     }
 
     public function findReadyToProcess(\DateTimeImmutable $now = new \DateTimeImmutable()): array
     {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = 'SELECT id FROM campaigns WHERE status = :status AND scheduled_at <= :now ORDER BY scheduled_at ASC FOR UPDATE SKIP LOCKED';
+
+        $result = $conn->executeQuery($sql, [
+            'status' => CampaignStatus::PENDING->value,
+            'now' => $now->format('Y-m-d H:i:s'),
+        ]);
+
+        $ids = $result->fetchFirstColumn();
+
+        if (empty($ids)) {
+            return [];
+        }
+
         return $this->createQueryBuilder('c')
-            ->where('c.status = :status')
-            ->andWhere('c.scheduledAt <= :now')
-            ->setParameter('status', CampaignStatus::PENDING)
-            ->setParameter('now', $now)
-            ->orderBy('c.scheduledAt', 'ASC')
+            ->where('c.id IN (:ids)')
+            ->setParameter('ids', $ids)
             ->getQuery()
             ->getResult();
     }

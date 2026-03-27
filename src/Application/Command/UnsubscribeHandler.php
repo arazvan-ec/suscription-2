@@ -6,10 +6,8 @@ namespace App\Application\Command;
 
 use App\Domain\Event\SubscriptionDeletedEvent;
 use App\Domain\Repository\SubscriptionRepositoryInterface;
-use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-#[AsMessageHandler]
 final readonly class UnsubscribeHandler
 {
     public function __construct(

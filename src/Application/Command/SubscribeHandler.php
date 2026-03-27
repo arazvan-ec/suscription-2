@@ -7,10 +7,8 @@ namespace App\Application\Command;
 use App\Domain\Entity\Subscription;
 use App\Domain\Event\SubscriptionCreatedEvent;
 use App\Domain\Repository\SubscriptionRepositoryInterface;
-use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-#[AsMessageHandler]
 final readonly class SubscribeHandler
 {
     public function __construct(
@@ -30,6 +28,13 @@ final readonly class SubscribeHandler
             if (!$existing->isActive()) {
                 $existing->reactivate();
                 $this->subscriptionRepository->save($existing);
+
+                $this->messageBus->dispatch(new SubscriptionCreatedEvent(
+                    userId: $command->userId,
+                    email: $command->email,
+                    entityType: $command->entityType,
+                    entityId: $command->entityId,
+                ));
             }
 
             return;

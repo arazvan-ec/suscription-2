@@ -22,55 +22,62 @@ final readonly class MailchimpClient implements MailchimpClientInterface
     {
         $subscriberHash = md5(strtolower($email));
 
-        try {
-            $this->httpClient->request('PUT', $this->buildUrl("/lists/{$this->mailchimpListId}/members/{$subscriberHash}"), [
+        $this->httpClient->request('PUT', $this->buildUrl("/lists/{$this->mailchimpListId}/members/{$subscriberHash}"), [
+            'json' => [
+                'email_address' => $email,
+                'status_if_new' => 'subscribed',
+            ],
+            'headers' => $this->buildHeaders(),
+            'timeout' => 5,
+        ]);
+
+        if (!empty($tags)) {
+            $this->httpClient->request('POST', $this->buildUrl("/lists/{$this->mailchimpListId}/members/{$subscriberHash}/tags"), [
                 'json' => [
-                    'email_address' => $email,
-                    'status_if_new' => 'subscribed',
+                    'tags' => array_map(
+                        static fn(string $tag): array => ['name' => $tag, 'status' => 'active'],
+                        $tags,
+                    ),
                 ],
                 'headers' => $this->buildHeaders(),
-            ]);
-
-            if (!empty($tags)) {
-                $this->httpClient->request('POST', $this->buildUrl("/lists/{$this->mailchimpListId}/members/{$subscriberHash}/tags"), [
-                    'json' => [
-                        'tags' => array_map(
-                            static fn(string $tag): array => ['name' => $tag, 'status' => 'active'],
-                            $tags,
-                        ),
-                    ],
-                    'headers' => $this->buildHeaders(),
-                ]);
-            }
-
-            $this->logger->info('Added to Mailchimp audience', ['email' => $email, 'tags' => $tags]);
-        } catch (\Throwable $e) {
-            $this->logger->error('Failed to add to Mailchimp audience', [
-                'email' => $email,
-                'error' => $e->getMessage(),
+                'timeout' => 5,
             ]);
         }
+
+        $this->logger->info('Added to Mailchimp audience', ['email' => $email, 'tags' => $tags]);
+    }
+
+    public function removeTagsFromAudience(string $email, array $tags): void
+    {
+        $subscriberHash = md5(strtolower($email));
+
+        $this->httpClient->request('POST', $this->buildUrl("/lists/{$this->mailchimpListId}/members/{$subscriberHash}/tags"), [
+            'json' => [
+                'tags' => array_map(
+                    static fn(string $tag): array => ['name' => $tag, 'status' => 'inactive'],
+                    $tags,
+                ),
+            ],
+            'headers' => $this->buildHeaders(),
+            'timeout' => 5,
+        ]);
+
+        $this->logger->info('Removed tags from Mailchimp member', ['email' => $email, 'tags' => $tags]);
     }
 
     public function removeFromAudience(string $email): void
     {
         $subscriberHash = md5(strtolower($email));
 
-        try {
-            $this->httpClient->request('PATCH', $this->buildUrl("/lists/{$this->mailchimpListId}/members/{$subscriberHash}"), [
-                'json' => [
-                    'status' => 'unsubscribed',
-                ],
-                'headers' => $this->buildHeaders(),
-            ]);
+        $this->httpClient->request('PATCH', $this->buildUrl("/lists/{$this->mailchimpListId}/members/{$subscriberHash}"), [
+            'json' => [
+                'status' => 'unsubscribed',
+            ],
+            'headers' => $this->buildHeaders(),
+            'timeout' => 5,
+        ]);
 
-            $this->logger->info('Removed from Mailchimp audience', ['email' => $email]);
-        } catch (\Throwable $e) {
-            $this->logger->error('Failed to remove from Mailchimp audience', [
-                'email' => $email,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        $this->logger->info('Removed from Mailchimp audience', ['email' => $email]);
     }
 
     private function buildUrl(string $path): string
@@ -81,7 +88,7 @@ final readonly class MailchimpClient implements MailchimpClientInterface
     private function buildHeaders(): array
     {
         return [
-            'Authorization' => "Bearer {$this->mailchimpApiKey}",
+            'Authorization' => 'Basic ' . base64_encode('anystring:' . $this->mailchimpApiKey),
             'Content-Type' => 'application/json',
         ];
     }

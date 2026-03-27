@@ -79,7 +79,16 @@ final readonly class SubscriptionController
             return $user;
         }
 
-        $type = EntityType::from($payload->entityType);
+        $type = EntityType::tryFrom($payload->entityType);
+
+        if ($type === null) {
+            return new ApiProblemResponse(
+                'https://httpstatuses.com/400',
+                'Bad Request',
+                400,
+                "Invalid entity type: {$payload->entityType}",
+            );
+        }
 
         ($this->subscribeHandler)(
             new SubscribeCommand($user->id, $user->email, $type, $payload->entityId)

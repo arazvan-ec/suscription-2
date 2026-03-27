@@ -47,15 +47,15 @@ final readonly class JwtTokenDecoder
             return null;
         }
 
-        // Check expiration
-        if (isset($decoded['exp']) && $decoded['exp'] < time()) {
-            $this->logger->info('JWT: token expired');
+        // Validate required claims
+        if (!isset($decoded['sub'], $decoded['email'], $decoded['exp'])) {
+            $this->logger->warning('JWT: missing required claims (sub, email, exp)');
             return null;
         }
 
-        // Validate required claims
-        if (!isset($decoded['sub'], $decoded['email'])) {
-            $this->logger->warning('JWT: missing required claims (sub, email)');
+        // Check expiration
+        if ($decoded['exp'] < time()) {
+            $this->logger->info('JWT: token expired');
             return null;
         }
 
